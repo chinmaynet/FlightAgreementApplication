@@ -61,13 +61,19 @@ namespace FlightAgreementApplication.FAAWrapper
         }
 
 
-        //public IActionResult UpdateTourOperator(Guid tourOperatorId, updateTourOperator updatedTourOperatorDto)
-        //{
-        //}
+        public string UpdateTourOperator(Guid tourOperatorId, updateTourOperator updatedTourOperatorDto)
+        {
+
+            var msg = _data.UpdateTourOperator(tourOperatorId, updatedTourOperatorDto);
+            return msg;
+
+        }
 
 
-        //public IActionResult DeleteTourOperator(Guid tourOperatorId)
-        //{
-        //}
+        public String DeleteTourOperator(Guid tourOperatorId)
+        {
+            var msg = _data.DeleteTourOperator(tourOperatorId);
+            return msg;
+        }
     }
 }

@@ -18,10 +18,10 @@ using System.Security.Cryptography;
 
 namespace FlightAgreementApplication.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
- 
+
     public class AirlineManagerOperations : ControllerBase
     {
 
@@ -64,8 +64,10 @@ namespace FlightAgreementApplication.Controllers
 
         [HttpGet("GetTourOperatorById/{tourOperatorId}")]
 
-        public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId) {
-            try {
+        public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId)
+        {
+            try
+            {
                 var tourOperator = _wrapper.GetTourOperatorById(tourOperatorId);
                 return Ok(tourOperator.Value);
             }
@@ -210,75 +212,92 @@ namespace FlightAgreementApplication.Controllers
         //    }
         //}
 
+        //[HttpPut("UpdateTourOperator/{tourOperatorId}")]
+        //public IActionResult UpdateTourOperator(Guid tourOperatorId, [FromBody] updateTourOperator updatedTourOperatorDto)
+        //{
+        //    try
+        //    {
+
+        //        var existingTourOperator = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
+
+        //        if (existingTourOperator == null)
+        //        {
+        //            return NotFound($"Tour Operator with ID {tourOperatorId} not found.");
+        //        }
+
+        //        existingTourOperator.TourOperatorName = updatedTourOperatorDto.TourOperatorName;
+        //        existingTourOperator.TourOperatorAddress = updatedTourOperatorDto.TourOperatorAddress;
+        //        existingTourOperator.TourOperatorEmail = updatedTourOperatorDto.TourOperatorEmail;
+        //        existingTourOperator.TourOperatorPhone = updatedTourOperatorDto.TourOperatorPhone;
+        //        existingTourOperator.TourOperatorLandLine = updatedTourOperatorDto.TourOperatorLandLine;
+        //        existingTourOperator.TourOperatorContactPreferences = updatedTourOperatorDto.TourOperatorContactPreferences;
+
+        //        existingTourOperator.ModifiedBy = "AirlineManager";
+        //        existingTourOperator.ModifyDate = DateTime.UtcNow;
+
+        //        _context.SaveChanges();
+
+        //        return Ok("Tour Operator updated successfully.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "An error occurred while processing your request.");
+        //    }
+        //}
+
         [HttpPut("UpdateTourOperator/{tourOperatorId}")]
-        public IActionResult UpdateTourOperator(Guid tourOperatorId, [FromBody] updateTourOperator updatedTourOperatorDto)
+        public string UpdateTourOperator(Guid tourOperatorId, [FromBody] updateTourOperator updatedTourOperatorDto)
         {
-            try
-            {
+            var msg = _wrapper.UpdateTourOperator(tourOperatorId, updatedTourOperatorDto);
 
-                var existingTourOperator = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
-
-                if (existingTourOperator == null)
-                {
-                    return NotFound($"Tour Operator with ID {tourOperatorId} not found.");
-                }
-
-                existingTourOperator.TourOperatorName = updatedTourOperatorDto.TourOperatorName;
-                existingTourOperator.TourOperatorAddress = updatedTourOperatorDto.TourOperatorAddress;
-                existingTourOperator.TourOperatorEmail = updatedTourOperatorDto.TourOperatorEmail;
-                existingTourOperator.TourOperatorPhone = updatedTourOperatorDto.TourOperatorPhone;
-                existingTourOperator.TourOperatorLandLine = updatedTourOperatorDto.TourOperatorLandLine;
-                existingTourOperator.TourOperatorContactPreferences = updatedTourOperatorDto.TourOperatorContactPreferences;
-
-                existingTourOperator.ModifiedBy = "AirlineManager";
-                existingTourOperator.ModifyDate = DateTime.UtcNow;
-
-                _context.SaveChanges();
-
-                return Ok("Tour Operator updated successfully.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while processing your request.");
-            }
+            return msg;
         }
+
+        //[HttpDelete("DeleteTourOperator/{tourOperatorId}")]
+        //public IActionResult DeleteTourOperator(Guid tourOperatorId)
+        //{
+        //    try
+        //    {
+
+        //        var userRole = _context.UserRole.FirstOrDefault(userRole => userRole.TourOperatorId == tourOperatorId);
+
+        //        _context.UserRole.Remove(userRole);
+        //        _context.SaveChanges();
+
+        //        var user = _context.users.FirstOrDefault(user => user.Id == userRole.UId);
+
+        //        _context.users.Remove(user);
+        //        _context.SaveChanges();
+
+        //        var tourOperatorToDelete = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
+
+        //        if (tourOperatorToDelete == null)
+        //        {
+        //            return NotFound($"Tour Operator with ID {tourOperatorId} not found.");
+        //        }
+
+        //        _context.TourOperators.Remove(tourOperatorToDelete);
+        //        _context.SaveChanges();
+
+        //        return Ok("Tour Operator deleted successfully.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "An error occurred while processing your request.");
+        //    }
+        //}
+
+
 
         [HttpDelete("DeleteTourOperator/{tourOperatorId}")]
-        public IActionResult DeleteTourOperator(Guid tourOperatorId)
+        public String DeleteTourOperator(Guid tourOperatorId)
         {
-            try
-            {
-
-                var userRole = _context.UserRole.FirstOrDefault(userRole => userRole.TourOperatorId == tourOperatorId);
-
-                _context.UserRole.Remove(userRole);
-                _context.SaveChanges();
-
-                var user = _context.users.FirstOrDefault(user => user.Id == userRole.UId);
-
-                _context.users.Remove(user);
-                _context.SaveChanges();
-
-                var tourOperatorToDelete = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
-
-                if (tourOperatorToDelete == null)
-                {
-                    return NotFound($"Tour Operator with ID {tourOperatorId} not found.");
-                }
-
-                _context.TourOperators.Remove(tourOperatorToDelete);
-                _context.SaveChanges();
-
-                return Ok("Tour Operator deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while processing your request.");
-            }
+            var msg=_wrapper.DeleteTourOperator(tourOperatorId);
+            return msg;
         }
 
 
-        private string GenerateToken()
+            private string GenerateToken()
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new byte[32];

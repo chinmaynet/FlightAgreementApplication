@@ -159,14 +159,73 @@ namespace FlightAgreementApplication.FAAData
         }
 
 
-        //public IActionResult UpdateTourOperator(Guid tourOperatorId, updateTourOperator updatedTourOperatorDto)
-        //{
-        //}
+        public string UpdateTourOperator(Guid tourOperatorId, updateTourOperator updatedTourOperatorDto)
+        {
+            try
+            {
+
+                var existingTourOperator = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
+
+                if (existingTourOperator == null)
+                {
+                    return ($"Tour Operator with ID {tourOperatorId} not found.");
+                }
+
+                existingTourOperator.TourOperatorName = updatedTourOperatorDto.TourOperatorName;
+                existingTourOperator.TourOperatorAddress = updatedTourOperatorDto.TourOperatorAddress;
+                existingTourOperator.TourOperatorEmail = updatedTourOperatorDto.TourOperatorEmail;
+                existingTourOperator.TourOperatorPhone = updatedTourOperatorDto.TourOperatorPhone;
+                existingTourOperator.TourOperatorLandLine = updatedTourOperatorDto.TourOperatorLandLine;
+                existingTourOperator.TourOperatorContactPreferences = updatedTourOperatorDto.TourOperatorContactPreferences;
+
+                existingTourOperator.ModifiedBy = "AirlineManager";
+                existingTourOperator.ModifyDate = DateTime.UtcNow;
+
+                _context.SaveChanges();
+
+                return ("Tour Operator updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ( "An error occurred while processing your request.");
+            }
+
+        }
 
 
-        //public IActionResult DeleteTourOperator(Guid tourOperatorId)
-        //{
-        //}
+        public String DeleteTourOperator(Guid tourOperatorId)
+        {
+            try
+            {
+
+                var userRole = _context.UserRole.FirstOrDefault(userRole => userRole.TourOperatorId == tourOperatorId);
+
+                _context.UserRole.Remove(userRole);
+                _context.SaveChanges();
+
+                var user = _context.users.FirstOrDefault(user => user.Id == userRole.UId);
+
+                _context.users.Remove(user);
+                _context.SaveChanges();
+
+                var tourOperatorToDelete = _context.TourOperators.FirstOrDefault(to => to.TourOperatorId == tourOperatorId);
+
+                if (tourOperatorToDelete == null)
+                {
+                    return ($"Tour Operator with ID {tourOperatorId} not found.");
+                }
+
+                _context.TourOperators.Remove(tourOperatorToDelete);
+                _context.SaveChanges();
+
+                return ("Tour Operator deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return ( "An error occurred while processing your request.");
+            }
+
+        }
 
 
 
