@@ -1,4 +1,4 @@
-﻿namespace FlightAgreementApplication.Dto
+﻿namespace FlightAgreementApplication.DTO.Request
 {
     public class UpdatePasswordDto
     {

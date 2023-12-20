@@ -1,6 +1,4 @@
-﻿using FlightAgreementApplication.Dto;
-using FlightAgreementApplication.DTO;
-using FlightAgreementApplication.DTO.Request;
+﻿using FlightAgreementApplication.DTO.Request;
 using FlightAgreementApplication.DTO.Response;
 using FlightAgreementApplication.FAAData;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -19,11 +17,11 @@ namespace FlightAgreementApplication.FAAWrapper
             _data = data;
         }
 
-        public LoginResponse Login(LoginRequestDto request)
+        public AuthResponse Login(LoginRequestDto request)
         {
             try
             {
-                LoginResponse userdetails = _data.Login(request);
+                AuthResponse userdetails = _data.Login(request);
                 return userdetails;
                  
             }
@@ -86,6 +84,43 @@ namespace FlightAgreementApplication.FAAWrapper
             }
         }
 
+        public async Task<ResetPasswordResponse> ResetPasswordRequest( ResetPasswordRequestDto request) {
+
+            try {
+                var resetPasswordResponse = await _data.ResetPasswordRequest(request);
+
+                return resetPasswordResponse;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<ResetPasswordVerifyResponse> ResetPasswordVerify( ResetPasswordVerifyRequestDto request)
+        {
+            try {
+                var resetPasswordVerifyResponse = await _data.ResetPasswordVerify(request);
+                return resetPasswordVerifyResponse;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public async Task<UpdateUserDetailsResponse> UpdateUserDetails( Guid userId,  UpdateUserDetailsDto userDetailsDto)
+        {
+
+            try
+            {
+                var updateUserDetailsResponse = await _data.UpdateUserDetails(userId, userDetailsDto);
+                return updateUserDetailsResponse;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
 
 
@@ -113,8 +148,7 @@ namespace FlightAgreementApplication.FAAWrapper
 
 
 
-
-        private IActionResult StatusCode(int v, object value)
+            private IActionResult StatusCode(int v, object value)
         {
             throw new NotImplementedException();
         }

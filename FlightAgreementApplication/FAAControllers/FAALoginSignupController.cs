@@ -1,23 +1,5 @@
 ﻿using FlightAgreementApplication.Data;
-using FlightAgreementApplication.DTO;
-using FlightAgreementApplication.Model;
-using FlightAgreementApplication.Services;
-using MailKit.Security;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using MimeKit.Text;
-using MimeKit;
-using Newtonsoft.Json.Linq;
-using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using Org.BouncyCastle.Tls;
-using MailKit.Net.Smtp;
-using FlightAgreementApplication.Dto;
 using Microsoft.AspNetCore.Authorization;
 using FlightAgreementApplication.DTO.Request;
 using FlightAgreementApplication.FAAWrapper;
@@ -37,11 +19,8 @@ namespace FlightAgreementApplication.Controllers
         public FAALoginSignupController(FAALoginSignupWrapper wrapper, FlightAgreementAppContext context)
         {
             _wrapper = wrapper;
-            _context = context;
+            //_context = context;
         }
-
-
-
 
         //public FAALoginSignupController(FlightAgreementAppContext context)
         //{
@@ -268,28 +247,28 @@ namespace FlightAgreementApplication.Controllers
         //    }
         //}
 
-        private string GenerateToken()
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(key);
-            }
+        //private string GenerateToken()
+        //{
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = new byte[32];
+        //    using (var rng = RandomNumberGenerator.Create())
+        //    {
+        //        rng.GetBytes(key);
+        //    }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-            new Claim(ClaimTypes.Name, Guid.NewGuid().ToString())
-                }),
-                Expires = DateTime.UtcNow.AddHours(24),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(new Claim[]
+        //        {
+        //    new Claim(ClaimTypes.Name, Guid.NewGuid().ToString())
+        //        }),
+        //        Expires = DateTime.UtcNow.AddHours(24),
+        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        //    };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
-        }
+        //    var token = tokenHandler.CreateToken(tokenDescriptor);
+        //    return tokenHandler.WriteToken(token);
+        //}
 
         //[HttpPost("Login")]
         //public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -395,10 +374,10 @@ namespace FlightAgreementApplication.Controllers
 
 
         [HttpPost("Login")]
-        public LoginResponse LoginAction([FromBody] LoginRequestDto request)
+        public AuthResponse LoginAction([FromBody] LoginRequestDto request)
         {
 
-            LoginResponse loginResponse= _wrapper.Login(request);
+            AuthResponse loginResponse= _wrapper.Login(request);
 
             return loginResponse;
 
@@ -507,46 +486,22 @@ namespace FlightAgreementApplication.Controllers
         //    }
         //}
 
+
         [HttpPost("ResetPasswordRequest")]
         public async Task<IActionResult> ResetPasswordRequest([FromBody] ResetPasswordRequestDto request)
         {
             try
             {
-                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
-                if (user == null)
+                ResetPasswordResponse resetPasswordResponse = await _wrapper.ResetPasswordRequest(request);
+
+                if (resetPasswordResponse.messege == "Reset token generated successfully")
                 {
-                    return NotFound("User not found");
+                    return Ok("Reset token generated successfully");
                 }
 
-
-                user.ResetToken = GenerateToken();
-                user.ResetTokenExpiry = DateTime.UtcNow.AddHours(24);
-                await _context.SaveChangesAsync();
-
-
-                var resetPasswordLink = $"http://localhost:3000/login/resetPassword/{user.ResetToken}/?email={user.UserEmail}";
-
-
-                var email = new MimeMessage();
-                email.From.Add(MailboxAddress.Parse("ccchinmaysinnn@gmail.com"));
-                email.To.Add(MailboxAddress.Parse(user.UserEmail));
-                email.Subject = "FAA Account's Forgot Password Link";
-
-                var bodyBuilder = new BodyBuilder
-                {
-                    TextBody = $"Click the following link to reset your password: {resetPasswordLink}"
-                };
-                email.Body = bodyBuilder.ToMessageBody();
-
-                using var smtp = new SmtpClient();
-                smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-                smtp.Authenticate("ccchinmaysinnn@gmail.com", "vcxe hoqo qlvp hekw");
-                smtp.Send(email);
-                smtp.Disconnect(true);
-
-
-
-                return Ok("Reset token generated successfully");
+                else {
+                    return BadRequest(new { Message = "An error occurred during reset token generation." });
+                }
             }
             catch (Exception ex)
             {
@@ -554,40 +509,111 @@ namespace FlightAgreementApplication.Controllers
             }
         }
 
+        //    [HttpPost("ResetPasswordRequest")]
+        //public async Task<IActionResult> ResetPasswordRequest([FromBody] ResetPasswordRequestDto request)
+        //{
+        //    try
+        //    {
+        //        var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+        //        if (user == null)
+        //        {
+        //            return NotFound("User not found");
+        //        }
+
+
+        //        user.ResetToken = GenerateToken();
+        //        user.ResetTokenExpiry = DateTime.UtcNow.AddHours(24);
+        //        await _context.SaveChangesAsync();
+
+
+        //        var resetPasswordLink = $"http://localhost:3000/login/resetPassword/{user.ResetToken}/?email={user.UserEmail}";
+
+
+        //        var email = new MimeMessage();
+        //        email.From.Add(MailboxAddress.Parse("ccchinmaysinnn@gmail.com"));
+        //        email.To.Add(MailboxAddress.Parse(user.UserEmail));
+        //        email.Subject = "FAA Account's Forgot Password Link";
+
+        //        var bodyBuilder = new BodyBuilder
+        //        {
+        //            TextBody = $"Click the following link to reset your password: {resetPasswordLink}"
+        //        };
+        //        email.Body = bodyBuilder.ToMessageBody();
+
+        //        using var smtp = new SmtpClient();
+        //        smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+        //        smtp.Authenticate("ccchinmaysinnn@gmail.com", "vcxe hoqo qlvp hekw");
+        //        smtp.Send(email);
+        //        smtp.Disconnect(true);
+
+
+
+        //        return Ok("Reset token generated successfully");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = "An error occurred during reset token generation.", Error = ex.Message });
+        //    }
+        //}
+
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPasswordVerify([FromBody] ResetPasswordVerifyRequestDto request)
         {
             try
             {
-
-                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
-                if (user == null)
+                ResetPasswordVerifyResponse ResetPasswordVerifyResponse = await _wrapper.ResetPasswordVerify(request); ;
+                if (ResetPasswordVerifyResponse.messege == "Password reset successful")
                 {
-                    return NotFound("User not found");
+                    return Ok("Password reset successful");
                 }
 
-
-                if (user.ResetToken != request.ResetToken || DateTime.UtcNow > user.ResetTokenExpiry)
+                else if (ResetPasswordVerifyResponse.messege == "Invalid or expired reset token")
                 {
-                    return BadRequest("Invalid or expired reset token");
+                    return BadRequest(new { Message = "Invalid or expired reset token" });
                 }
 
-
-                var passwordHasher = new PasswordHasher<User>();
-                user.UserPassword = passwordHasher.HashPassword(user, request.NewPassword);
-
-                user.ResetToken = null;
-                user.ResetTokenExpiry = null;
-
-                await _context.SaveChangesAsync();
-
-                return Ok("Password reset successful");
+                else {
+                    return NotFound(new  { Message = "User not found" });
+                }
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "An error occurred during password reset.", Error = ex.Message });
             }
         }
+            //public async Task<IActionResult> ResetPasswordVerify([FromBody] ResetPasswordVerifyRequestDto request)
+            //{
+            //    try
+            //    {
+
+            //        var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+            //        if (user == null)
+            //        {
+            //            return NotFound("User not found");
+            //        }
+
+
+            //        if (user.ResetToken != request.ResetToken || DateTime.UtcNow > user.ResetTokenExpiry)
+            //        {
+            //            return BadRequest("Invalid or expired reset token");
+            //        }
+
+
+            //        var passwordHasher = new PasswordHasher<User>();
+            //        user.UserPassword = passwordHasher.HashPassword(user, request.NewPassword);
+
+            //        user.ResetToken = null;
+            //        user.ResetTokenExpiry = null;
+
+            //        await _context.SaveChangesAsync();
+
+            //        return Ok("Password reset successful");
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        return StatusCode(500, new { Message = "An error occurred during password reset.", Error = ex.Message });
+            //    }
+            //}
 
 
         [Authorize]
@@ -650,113 +676,135 @@ namespace FlightAgreementApplication.Controllers
 
         [Authorize]
         [HttpPut("UpdateUserDetails/{userId}")]
-        public async Task<IActionResult> UpdateUserDetails([FromRoute] Guid userId, [FromBody] UpdateUserDetailsDto userDetailsDto)
-        {
+
+        public async Task<IActionResult> UpdateUserDetails([FromRoute] Guid userId, [FromBody] UpdateUserDetailsDto userDetailsDto) {
+
             try
             {
+                var UpdateUserDetailsResponse = await _wrapper.UpdateUserDetails(userId, userDetailsDto);
 
-                var user = await _context.users
-                    .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                if (user == null)
+                if (UpdateUserDetailsResponse!=null && UpdateUserDetailsResponse.messege == "User Updated Sucessfully")
                 {
-                    return NotFound($"User with ID {userId} not found.");
+                    return Ok(UpdateUserDetailsResponse);
                 }
-
-                switch (user.UserRoles?.FirstOrDefault()?.Role?.RoleName)
+                else
                 {
-                    case "AirlineManager":
-
-                        var airlineManager = await _context.AirlineManagers
-                            .FirstOrDefaultAsync(am => am.AirlineManagerId == user.UserRoles.First().AirlineManagerId);
-
-                        if (airlineManager == null)
-                        {
-                            return NotFound($"AirlineManager not found for user with ID {userId}.");
-                        }
-
-                        airlineManager.AirlineManagerName = userDetailsDto.UserName;
-                        //airlineManager.AirlineManagerEmail = userDetailsDto.UserEmail;
-                        airlineManager.AirlineManagerPhone = userDetailsDto.AirlineManagerPhone;
-                        airlineManager.AirlineManagerLandLine = userDetailsDto.AirlineManagerLandLine;
-
-                        airlineManager.ModifiedBy = "user";
-                        airlineManager.ModifyDate = DateTime.UtcNow;
-                        break;
-
-                    case "TourOperator":
-
-                        var tourOperator = await _context.TourOperators
-                            .FirstOrDefaultAsync(to => to.TourOperatorId == user.UserRoles.First().TourOperatorId);
-
-                        if (tourOperator == null)
-                        {
-                            return NotFound($"TourOperator not found for user with ID {userId}.");
-                        }
-
-                        tourOperator.TourOperatorName = userDetailsDto.UserName;
-                        //tourOperator.TourOperatorEmail = userDetailsDto.UserEmail;
-                        tourOperator.TourOperatorPhone = userDetailsDto.TourOperatorPhone;
-                        tourOperator.TourOperatorLandLine = userDetailsDto.TourOperatorLandLine;
-                        tourOperator.TourOperatorContactPreferences = userDetailsDto.TourOperatorContactPreference;
-                        tourOperator.TourOperatorAddress = userDetailsDto.TourOperatorAddress;
-
-
-                        tourOperator.ModifiedBy = "user";
-                        tourOperator.ModifyDate = DateTime.UtcNow;
-                        break;
-                    default:
-                        return BadRequest("Unsupported role for updating user details.");
+                    return BadRequest(UpdateUserDetailsResponse.messege);
                 }
-
-                user.UserName = userDetailsDto.UserName;
-                //user.UserEmail = userDetailsDto.UserEmail;
-
-                _context.users.Update(user);
-                await _context.SaveChangesAsync();
-
-                //return Ok("User details updated successfully.");
-                var role = user.UserRoles?.FirstOrDefault()?.Role?.RoleName;
-                var userDetails = new
-                {
-                    UserId = user.Id,
-                    UserName = user.UserName,
-                    UserEmail = user.UserEmail,
-                    UserRole = role,
-                    Details = role switch
-                    {
-                        "TourOperator" => (object)await _context.UserRole
-                            .Where(ur => ur.UId == user.Id)
-                            .Select(ur => ur.TourOperator)
-                            .Select(t => new
-                            {
-                                TourOperatorAddress = t.TourOperatorAddress,
-                                TourOperatorPhone = t.TourOperatorPhone,
-                                TourOperatorLandLine = t.TourOperatorLandLine,
-                                TourOperatorContactPreferences = t.TourOperatorContactPreferences,
-                            })
-                            .FirstOrDefaultAsync(),
-                        "AirlineManager" => await _context.UserRole
-                            .Where(ur => ur.UId == user.Id)
-                            .Select(ur => ur.AirlineManager)
-                            .Select(t => new
-                            {
-                                AirlineManagerPhone = t.AirlineManagerPhone,
-                                AirlineManagerLandLine = t.AirlineManagerLandLine,
-                            })
-                            .FirstOrDefaultAsync(),
-                        _ => null
-                    }
-                };
-
-                return Ok(userDetails);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, "An error occurred while processing your request.");
             }
+
         }
-    }
+            //public async Task<IActionResult> UpdateUserDetails([FromRoute] Guid userId, [FromBody] UpdateUserDetailsDto userDetailsDto)
+            //{
+            //    try
+            //    {
+
+            //        var user = await _context.users
+            //            .Include(u => u.UserRoles)
+            //            .ThenInclude(ur => ur.Role)
+            //            .FirstOrDefaultAsync(u => u.Id == userId);
+
+            //        if (user == null)
+            //        {
+            //            return NotFound($"User with ID {userId} not found.");
+            //        }
+
+            //        switch (user.UserRoles?.FirstOrDefault()?.Role?.RoleName)
+            //        {
+            //            case "AirlineManager":
+
+            //                var airlineManager = await _context.AirlineManagers
+            //                    .FirstOrDefaultAsync(am => am.AirlineManagerId == user.UserRoles.First().AirlineManagerId);
+
+            //                if (airlineManager == null)
+            //                {
+            //                    return NotFound($"AirlineManager not found for user with ID {userId}.");
+            //                }
+
+            //                airlineManager.AirlineManagerName = userDetailsDto.UserName;
+            //                //airlineManager.AirlineManagerEmail = userDetailsDto.UserEmail;
+            //                airlineManager.AirlineManagerPhone = userDetailsDto.AirlineManagerPhone;
+            //                airlineManager.AirlineManagerLandLine = userDetailsDto.AirlineManagerLandLine;
+
+            //                airlineManager.ModifiedBy = "user";
+            //                airlineManager.ModifyDate = DateTime.UtcNow;
+            //                break;
+
+            //            case "TourOperator":
+
+            //                var tourOperator = await _context.TourOperators
+            //                    .FirstOrDefaultAsync(to => to.TourOperatorId == user.UserRoles.First().TourOperatorId);
+
+            //                if (tourOperator == null)
+            //                {
+            //                    return NotFound($"TourOperator not found for user with ID {userId}.");
+            //                }
+
+            //                tourOperator.TourOperatorName = userDetailsDto.UserName;
+            //                //tourOperator.TourOperatorEmail = userDetailsDto.UserEmail;
+            //                tourOperator.TourOperatorPhone = userDetailsDto.TourOperatorPhone;
+            //                tourOperator.TourOperatorLandLine = userDetailsDto.TourOperatorLandLine;
+            //                tourOperator.TourOperatorContactPreferences = userDetailsDto.TourOperatorContactPreference;
+            //                tourOperator.TourOperatorAddress = userDetailsDto.TourOperatorAddress;
+
+
+            //                tourOperator.ModifiedBy = "user";
+            //                tourOperator.ModifyDate = DateTime.UtcNow;
+            //                break;
+            //            default:
+            //                return BadRequest("Unsupported role for updating user details.");
+            //        }
+
+            //        user.UserName = userDetailsDto.UserName;
+            //        //user.UserEmail = userDetailsDto.UserEmail;
+
+            //        _context.users.Update(user);
+            //        await _context.SaveChangesAsync();
+
+            //        //return Ok("User details updated successfully.");
+            //        var role = user.UserRoles?.FirstOrDefault()?.Role?.RoleName;
+            //        var userDetails = new
+            //        {
+            //            UserId = user.Id,
+            //            UserName = user.UserName,
+            //            UserEmail = user.UserEmail,
+            //            UserRole = role,
+            //            Details = role switch
+            //            {
+            //                "TourOperator" => (object)await _context.UserRole
+            //                    .Where(ur => ur.UId == user.Id)
+            //                    .Select(ur => ur.TourOperator)
+            //                    .Select(t => new
+            //                    {
+            //                        TourOperatorAddress = t.TourOperatorAddress,
+            //                        TourOperatorPhone = t.TourOperatorPhone,
+            //                        TourOperatorLandLine = t.TourOperatorLandLine,
+            //                        TourOperatorContactPreferences = t.TourOperatorContactPreferences,
+            //                    })
+            //                    .FirstOrDefaultAsync(),
+            //                "AirlineManager" => await _context.UserRole
+            //                    .Where(ur => ur.UId == user.Id)
+            //                    .Select(ur => ur.AirlineManager)
+            //                    .Select(t => new
+            //                    {
+            //                        AirlineManagerPhone = t.AirlineManagerPhone,
+            //                        AirlineManagerLandLine = t.AirlineManagerLandLine,
+            //                    })
+            //                    .FirstOrDefaultAsync(),
+            //                _ => null
+            //            }
+            //        };
+
+            //        return Ok(userDetails);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        return StatusCode(500, "An error occurred while processing your request.");
+            //    }
+            //}
+        }
 }

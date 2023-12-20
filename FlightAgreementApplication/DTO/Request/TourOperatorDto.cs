@@ -1,6 +1,6 @@
 ﻿using FlightAgreementApplication.Model;
 
-namespace FlightAgreementApplication.DTO
+namespace FlightAgreementApplication.DTO.Request
 {
     public class TourOperatorDto
     {

@@ -27,6 +27,11 @@ internal class Program
         builder.Services.AddScoped<FAALoginSignupWrapper>();
         builder.Services.AddScoped<FAALoginSignupData>();
 
+        builder.Services.AddScoped<FAAAirlineManagerOperationsData>();
+        builder.Services.AddScoped<FAAAirlineManagerOperationsWrapper>();
+
+
+
         //builder.Services.AddMediatR(typeof());
 
         builder.Services.AddControllers();

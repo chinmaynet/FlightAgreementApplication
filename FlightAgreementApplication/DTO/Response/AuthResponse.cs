@@ -19,17 +19,16 @@ namespace FlightAgreementApplication.DTO.Response
     //    public string? TourOperatorPhone { get; set; }
     //    public string? TourOperatorLandLine { get; set; }
     //    public ContactPreference? TourOperatorContactPreference { get; set; }
-
     //}
 
-    public class LoginResponse
+    public class AuthResponse
     {
         public Guid UserId { get; set; }
         public string UserName { get; set; }
         public string Token { get; set; }
         public string UserEmail { get; set; }
         public string UserRole { get; set; }
-        public string? Message { get; set; }
+        public string? Messege { get; set; }
         public UserDetails? Details { get; set; }
     }
 
@@ -78,8 +77,31 @@ namespace FlightAgreementApplication.DTO.Response
         public string messege { get; set; }
     
     }
-    
-        public class TourOperatorCreateResponse {
+    public class ResetPasswordResponse
+    {
+        public string messege { get; set; }
+
+    }
+    public class ResetPasswordVerifyResponse
+    {
+        public string messege { get; set; }
+    }
+
+    public class UpdateUserDetailsResponse {
+
+        public Guid UserId { get; set; }
+        public string UserName { get; set; }
+        //public string Token { get; set; }
+        public string UserEmail { get; set; }
+        public string UserRole { get; set; }
+        public string? messege { get; set; }
+        public UserDetails? Details { get; set; }
+    }
+
+  
+        
+
+    public class TourOperatorCreateResponse {
 
         public Guid TourOperatorId { get; set; }
         public string TourOperatorName { get; set; }
@@ -102,9 +124,9 @@ namespace FlightAgreementApplication.DTO.Response
         public string Token { get; set; }
         public string UserEmail { get; set; }
         public string UserRole { get; set; }
-        public string? Message { get; set; }
+        public string? Messege { get; set; }
         public UserDetails? Details { get; set; }
     }
- 
+  
 
 }

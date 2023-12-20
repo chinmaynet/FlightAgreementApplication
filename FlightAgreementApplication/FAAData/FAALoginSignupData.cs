@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FlightAgreementApplication.Data;
-using FlightAgreementApplication.DTO;
 using FlightAgreementApplication.Model;
 using FlightAgreementApplication.Services;
 using MailKit.Security;
@@ -25,11 +24,10 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Org.BouncyCastle.Tls;
 using MailKit.Net.Smtp;
-using FlightAgreementApplication.Dto;
 using Microsoft.AspNetCore.Authorization;
-using FlightAgreementApplication.DTO.Request;
 using FlightAgreementApplication.FAAWrapper;
 using Org.BouncyCastle.Crypto;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FlightAgreementApplication.FAAData
 {
@@ -42,7 +40,7 @@ namespace FlightAgreementApplication.FAAData
             _context = context;
         }
 
-        public LoginResponse Login(LoginRequestDto request)
+        public AuthResponse Login(LoginRequestDto request)
         {
             try
             {
@@ -52,12 +50,12 @@ namespace FlightAgreementApplication.FAAData
 
                 if (user == null)
                 {
-                    return new LoginResponse { Message = "Invalid email or password." };
+                    return new AuthResponse { Messege = "Invalid email or password." };
                 }
 
                 if ((int)user.ActivityStatus == 1)
                 {
-                    return new LoginResponse { Message = "Account is not activated." };
+                    return new AuthResponse { Messege = "Account is not activated." };
                 }
 
                 var passwordHasher = new PasswordHasher<User>();
@@ -65,14 +63,14 @@ namespace FlightAgreementApplication.FAAData
 
                 if (passwordVerificationResult != PasswordVerificationResult.Success)
                 {
-                    return new LoginResponse { Message = "Invalid email or password." };
+                    return new AuthResponse { Messege = "Invalid email or password." };
                 }
 
                 var role = user.UserRoles?.FirstOrDefault()?.Role?.RoleName;
 
                 if (string.IsNullOrEmpty(role))
                 {
-                    return new LoginResponse { Message = "User role not found." };
+                    return new AuthResponse { Messege = "User role not found." };
                 }
                 if (user != null)
                 {
@@ -90,7 +88,7 @@ namespace FlightAgreementApplication.FAAData
                         signingCredentials: signinCredentials
                     );
                     var tokenString = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
-                    var userDetails = new LoginResponse
+                    var userDetails = new AuthResponse
                     {
                         Token = tokenString,
                         UserId = user.Id,
@@ -147,12 +145,12 @@ namespace FlightAgreementApplication.FAAData
                 }
                 else
                 {
-                    return new LoginResponse { Message = "Invalid email or password." };
+                    return new AuthResponse { Messege = "Invalid email or password." };
                 }
             }
             catch (Exception ex)
             {
-                return new LoginResponse { Message = "An error occurred during login." };
+                return new AuthResponse { Messege = "An error occurred during login." };
             }
         }
 
@@ -190,13 +188,13 @@ namespace FlightAgreementApplication.FAAData
 
                 if (user == null)
                 {
-                    return new ActivateAccountResponse { Message = "User not found" };
+                    return new ActivateAccountResponse { Messege = "User not found" };
                 }
 
                 // Token verification logic here
                 if (user.ActivationToken != request.ActivationToken || DateTime.UtcNow > user.ActivationTokenExpiry)
                 {
-                    return new ActivateAccountResponse { Message = "Invalid or expired activation token" };
+                    return new ActivateAccountResponse { Messege = "Invalid or expired activation token" };
                 }
 
                 user.ActivityStatus = IsActive.Active;
@@ -206,7 +204,7 @@ namespace FlightAgreementApplication.FAAData
 
                 if (string.IsNullOrEmpty(role))
                 {
-                    return new ActivateAccountResponse { Message = "User role not found." };
+                    return new ActivateAccountResponse { Messege = "User role not found." };
                 }
 
                 var userDetails = new ActivateAccountResponse
@@ -276,7 +274,7 @@ namespace FlightAgreementApplication.FAAData
             }
             catch (Exception ex)
             {
-                return new ActivateAccountResponse { Message = "An error occurred during activation." };
+                return new ActivateAccountResponse { Messege = "An error occurred during activation." };
             }
         }
 
@@ -287,43 +285,7 @@ namespace FlightAgreementApplication.FAAData
         }
 
 
-        public async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordDto request)
-        {
-            try
-            {
-                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
-                if (user == null)
-                {
-                    
-                    return new UpdatePasswordResponse { messege = "User not found" };
-                }
-
-                var passwordHasher = new PasswordHasher<User>();
-                var passwordVerificationResult = passwordHasher.VerifyHashedPassword(user, user.UserPassword, request.CurrentPassword);
-
-
-                if (passwordVerificationResult != PasswordVerificationResult.Success)
-                {
-                    
-                    return new UpdatePasswordResponse { messege = "Current password is incorrect" };
-
-                }
-
-
-                user.UserPassword = passwordHasher.HashPassword(user, request.NewPassword);
-
-                await _context.SaveChangesAsync();           
-
-                return new UpdatePasswordResponse { messege = "Password updated successfully" };
-            }
-            catch (Exception ex)
-            {
-            
-                return new UpdatePasswordResponse { messege = "An error occurred during password update." };
-
-            }
-        }
-
+       
             public async Task<TourOperatorCreateResponse> CreateTourOperator(TourOperatorDto tourOperatorDto) {
 
             try
@@ -541,7 +503,257 @@ namespace FlightAgreementApplication.FAAData
 
         }
 
-        private AirlineManagerCreateResponse Ok(AirlineManagerCreateResponse responseData)
+        public async Task<UpdatePasswordResponse> UpdatePassword(UpdatePasswordDto request)
+        {
+            try
+            {
+                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+                if (user == null)
+                {
+
+                    return new UpdatePasswordResponse { messege = "User not found" };
+                }
+
+                var passwordHasher = new PasswordHasher<User>();
+                var passwordVerificationResult = passwordHasher.VerifyHashedPassword(user, user.UserPassword, request.CurrentPassword);
+
+
+                if (passwordVerificationResult != PasswordVerificationResult.Success)
+                {
+
+                    return new UpdatePasswordResponse { messege = "Current password is incorrect" };
+
+                }
+
+
+                user.UserPassword = passwordHasher.HashPassword(user, request.NewPassword);
+
+                await _context.SaveChangesAsync();
+
+                return new UpdatePasswordResponse { messege = "Password updated successfully" };
+            }
+            catch (Exception ex)
+            {
+
+                return new UpdatePasswordResponse { messege = "An error occurred during password update." };
+
+            }
+        }
+
+        public async Task<ResetPasswordResponse> ResetPasswordRequest([FromBody] ResetPasswordRequestDto request) {
+
+            try
+            {
+                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+                if (user == null)
+                {
+
+                    return new ResetPasswordResponse { messege="User not found" };
+                }
+
+
+                user.ResetToken = GenerateToken();
+                user.ResetTokenExpiry = DateTime.UtcNow.AddHours(24);
+                await _context.SaveChangesAsync();
+
+
+                var resetPasswordLink = $"http://localhost:3000/login/resetPassword/{user.ResetToken}/?email={user.UserEmail}";
+
+
+                var email = new MimeMessage();
+                email.From.Add(MailboxAddress.Parse("ccchinmaysinnn@gmail.com"));
+                email.To.Add(MailboxAddress.Parse(user.UserEmail));
+                email.Subject = "FAA Account's Forgot Password Link";
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    TextBody = $"Click the following link to reset your password: {resetPasswordLink}"
+                };
+                email.Body = bodyBuilder.ToMessageBody();
+
+                using var smtp = new SmtpClient();
+                smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                smtp.Authenticate("ccchinmaysinnn@gmail.com", "vcxe hoqo qlvp hekw");
+                smtp.Send(email);
+                smtp.Disconnect(true);
+
+
+                return new ResetPasswordResponse { messege = "Reset token generated successfully" };
+           
+            }
+            catch (Exception ex)
+            {
+                return new ResetPasswordResponse { messege = "An error occurred during reset token generation." };               
+            }
+        }
+
+        public async Task<ResetPasswordVerifyResponse> ResetPasswordVerify( ResetPasswordVerifyRequestDto request)
+        {
+            try
+            {
+
+                var user = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == request.UserEmail);
+                if (user == null)
+                {
+                 
+                    return new ResetPasswordVerifyResponse { messege = "User not found" };
+                }
+
+
+                if (user.ResetToken != request.ResetToken || DateTime.UtcNow > user.ResetTokenExpiry)
+                {
+          
+                    return new ResetPasswordVerifyResponse { messege = "Invalid or expired reset token" };
+                }
+
+
+                var passwordHasher = new PasswordHasher<User>();
+                user.UserPassword = passwordHasher.HashPassword(user, request.NewPassword);
+
+                user.ResetToken = null;
+                user.ResetTokenExpiry = null;
+
+                await _context.SaveChangesAsync();
+                return new ResetPasswordVerifyResponse { messege = "Password reset successful" };
+                
+            }
+            catch (Exception ex)
+            {
+                return new ResetPasswordVerifyResponse { messege = "An error occurred during password reset." };               
+            }
+        }
+
+        public async Task<UpdateUserDetailsResponse> UpdateUserDetails( Guid userId, UpdateUserDetailsDto userDetailsDto)
+        {
+            try
+            {
+
+                var user = await _context.users
+                    .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null)
+                {
+                    return new UpdateUserDetailsResponse { messege = $"User with ID {userId} not found." };
+                }
+
+                switch (user.UserRoles?.FirstOrDefault()?.Role?.RoleName)
+                {
+                    case "AirlineManager":
+
+                        var airlineManager = await _context.AirlineManagers
+                            .FirstOrDefaultAsync(am => am.AirlineManagerId == user.UserRoles.First().AirlineManagerId);
+
+                        if (airlineManager == null)
+                        {
+                            return new UpdateUserDetailsResponse { messege = $"AirlineManager not found for user with ID {userId}." };
+                            
+                        }
+
+                        airlineManager.AirlineManagerName = userDetailsDto.UserName;
+                        //airlineManager.AirlineManagerEmail = userDetailsDto.UserEmail;
+                        airlineManager.AirlineManagerPhone = userDetailsDto.AirlineManagerPhone;
+                        airlineManager.AirlineManagerLandLine = userDetailsDto.AirlineManagerLandLine;
+
+                        airlineManager.ModifiedBy = "user";
+                        airlineManager.ModifyDate = DateTime.UtcNow;
+                        break;
+
+                    case "TourOperator":
+
+                        var tourOperator = await _context.TourOperators
+                            .FirstOrDefaultAsync(to => to.TourOperatorId == user.UserRoles.First().TourOperatorId);
+
+                        if (tourOperator == null)
+                        {
+                            return new UpdateUserDetailsResponse { messege = $"TourOperator not found for user with ID {userId}." };
+
+                        }
+
+                        tourOperator.TourOperatorName = userDetailsDto.UserName;
+                        //tourOperator.TourOperatorEmail = userDetailsDto.UserEmail;
+                        tourOperator.TourOperatorPhone = userDetailsDto.TourOperatorPhone;
+                        tourOperator.TourOperatorLandLine = userDetailsDto.TourOperatorLandLine;
+                        tourOperator.TourOperatorContactPreferences = userDetailsDto.TourOperatorContactPreference;
+                        tourOperator.TourOperatorAddress = userDetailsDto.TourOperatorAddress;
+
+
+                        tourOperator.ModifiedBy = "user";
+                        tourOperator.ModifyDate = DateTime.UtcNow;
+                        break;
+                    default:                        
+                        return new UpdateUserDetailsResponse { messege = "Unsupported role for updating user details." };
+                }
+
+                user.UserName = userDetailsDto.UserName;
+                //user.UserEmail = userDetailsDto.UserEmail;
+
+                _context.users.Update(user);
+                await _context.SaveChangesAsync();
+
+                //return Ok("User details updated successfully.");
+                var role = user.UserRoles?.FirstOrDefault()?.Role?.RoleName;
+                var userDetails = new UpdateUserDetailsResponse
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName,
+                    UserEmail = user.UserEmail,
+                    UserRole = role,
+
+                };
+                switch (role)
+                {
+                    case "TourOperator":
+                        userDetails.Details = new UserDetails
+                        {
+                            TourOperatorAddress = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.TourOperator.TourOperatorAddress)
+                                .FirstOrDefault(),
+                            TourOperatorPhone = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.TourOperator.TourOperatorPhone)
+                                .FirstOrDefault(),
+                            TourOperatorLandLine = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.TourOperator.TourOperatorLandLine)
+                                .FirstOrDefault(),
+                            TourOperatorContactPreference = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.TourOperator.TourOperatorContactPreferences)
+                                .FirstOrDefault()
+                        };
+                        break;
+
+                    case "AirlineManager":
+                        userDetails.Details = new UserDetails
+                        {
+                            AirlineManagerPhone = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.AirlineManager.AirlineManagerPhone)
+                                .FirstOrDefault(),
+                            AirlineManagerLandLine = _context.UserRole
+                                .Where(ur => ur.UId == userDetails.UserId)
+                                .Select(ur => ur.AirlineManager.AirlineManagerLandLine)
+                                .FirstOrDefault()
+                        };
+                        break;
+                    default:                     
+                        break;
+                }
+                userDetails.messege = "User Updated Sucessfully";
+                return userDetails;
+            }                         
+            catch (Exception ex)
+            {
+             
+                return new UpdateUserDetailsResponse { messege = "An error occurred while processing your request." };
+            }
+
+        }
+
+            private AirlineManagerCreateResponse Ok(AirlineManagerCreateResponse responseData)
         {
             throw new NotImplementedException();
         }
