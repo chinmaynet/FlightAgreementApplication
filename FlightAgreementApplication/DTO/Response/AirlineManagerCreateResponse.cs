@@ -1,0 +1,4 @@
+﻿namespace FlightAgreementApplication.DTO.Response
+{
+
+}
