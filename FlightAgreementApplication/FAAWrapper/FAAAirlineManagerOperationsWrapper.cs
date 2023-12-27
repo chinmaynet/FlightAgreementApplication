@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using static FlightAgreementApplication.DTO.Response.AirlineManagerOperationsResponse;
 
 namespace FlightAgreementApplication.FAAWrapper
 {
@@ -20,8 +21,14 @@ namespace FlightAgreementApplication.FAAWrapper
             _data = data;
         }
 
-        public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators() {
 
+        public ActionResult<GetAllTourOperatorsResponse> GetAllTourOperators(
+            string sortColumn = "tourOperatorName",
+            string sortOrder = "asc",
+            string searchTerm = "",
+            int page = 1,
+            int pageSize = 5)
+        {
             try
             {
                 var tourOperators = _data.GetAllTourOperators();
@@ -32,8 +39,20 @@ namespace FlightAgreementApplication.FAAWrapper
                 throw ex;
             }
         }
+            //public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators() {
 
-       public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId)
+            //    try
+            //    {
+            //        var tourOperators = _data.GetAllTourOperators();
+            //        return tourOperators;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        throw ex;
+            //    }
+            //}
+
+            public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId)
         {
             try
             {

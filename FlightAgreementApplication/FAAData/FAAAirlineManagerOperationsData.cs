@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using MimeKit;
 using FlightAgreementApplication.DTO.Response;
 using MailKit.Net.Smtp;
+using static FlightAgreementApplication.DTO.Response.AirlineManagerOperationsResponse;
 
 namespace FlightAgreementApplication.FAAData
 {
@@ -23,22 +24,60 @@ namespace FlightAgreementApplication.FAAData
             _context = context;
         }
 
-        public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators()
+        //public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators()
+        //{
+        //    try
+        //    {
+
+        //        var tourOperators = _context.TourOperators.ToList();
+        //        return tourOperators;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
+
+        public ActionResult<GetAllTourOperatorsResponse> GetAllTourOperators(
+           string sortColumn = "tourOperatorName",
+           string sortOrder = "asc",
+           string searchTerm = "",
+           int page = 1,
+           int pageSize = 5)
         {
             try
             {
 
                 var tourOperators = _context.TourOperators.ToList();
-                return tourOperators;
+
+
+                tourOperators = SearchTourOperators(tourOperators, searchTerm);
+
+
+                tourOperators = SortTourOperators(tourOperators, sortColumn, sortOrder);
+
+
+                var totalRowCount = tourOperators.Count;
+
+
+                var startIndex = (page - 1) * pageSize;
+                tourOperators = tourOperators.Skip(startIndex).Take(pageSize).ToList();
+
+
+                var response = new GetAllTourOperatorsResponse
+                {
+                    TotalRows = totalRowCount,
+                    TourOperators = tourOperators,
+                };
+
+                return response;
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
-
-
-        public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId)
+            public ActionResult<TourOperator> GetTourOperatorById(Guid tourOperatorId)
         {
             try
             {
@@ -57,7 +96,65 @@ namespace FlightAgreementApplication.FAAData
             }
         }
 
+        private List<TourOperator> SearchTourOperators(List<TourOperator> tourOperators, string searchTerm)
+        {
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                tourOperators = tourOperators.Where(o =>
+            o.TourOperatorName.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorEmail.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorAddress.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorPhone.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorLandLine.ToLower().Contains(searchTerm) ||
+                      o.TourOperatorContactPreferences.ToString().ToLower().Contains(searchTerm)
 
+                ).ToList();
+            }
+
+            return tourOperators;
+        }
+
+        private List<TourOperator> SortTourOperators(List<TourOperator> tourOperators, string sortColumn, string sortOrder)
+        {
+
+            switch (sortColumn)
+            {
+                case "tourOperatorName":
+                    tourOperators = sortOrder == "asc"
+                        ? tourOperators.OrderBy(o => o.TourOperatorName).ToList()
+                        : tourOperators.OrderByDescending(o => o.TourOperatorName).ToList();
+                    break;
+                case "tourOperatorEmail":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorEmail).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorEmail).ToList();
+                    break;
+                case "tourOperatorAddress":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorAddress).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorAddress).ToList();
+                    break;
+                case "tourOperatorPhone":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorPhone).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorPhone).ToList();
+                    break;
+                case "tourOperatorLandLine":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorLandLine).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorLandLine).ToList();
+                    break;
+                case "tourOperatorContactPreferences":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorContactPreferences).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorContactPreferences).ToList();
+                    break;
+
+            }
+
+            return tourOperators;
+        }
         public async Task<string> AddTourOperator(TourOperatorDto newTourOperatorDto)
         {
             try
@@ -72,6 +169,7 @@ namespace FlightAgreementApplication.FAAData
                     TourOperatorPhone = newTourOperatorDto.TourOperatorPhone,
                     TourOperatorLandLine = newTourOperatorDto.TourOperatorLandLine,
                     TourOperatorContactPreferences = (ContactPreference)newTourOperatorDto.TourOperatorContactPreferences,
+                    ActivityStatus = IsActive.Active,
                     AddedBy = "AirlineManager",
                 };
 
@@ -85,9 +183,9 @@ namespace FlightAgreementApplication.FAAData
                     UserName = newTourOperatorDto.TourOperatorName,
                     UserEmail = newTourOperatorDto.TourOperatorEmail,
                     //UserPassword = tourOperatorDto.TourOperatorPassword,
-                    ActivityStatus = IsActive.Inactive,
-                    ActivationToken = GenerateToken(),
-                    ActivationTokenExpiry = DateTime.UtcNow.AddHours(24),
+                    ActivityStatus = IsActive.Active,
+                    //ActivationToken = GenerateToken(),
+                    //ActivationTokenExpiry = DateTime.UtcNow.AddHours(24),
                 };
 
                 var passwordHasher = new PasswordHasher<User>();
@@ -131,22 +229,22 @@ namespace FlightAgreementApplication.FAAData
                     UserRole = user.UserRoles?.FirstOrDefault()?.Role?.RoleName
                 };
 
-                var email = new MimeMessage();
-                email.From.Add(MailboxAddress.Parse("ccchinmaysinnn@gmail.com"));
-                email.To.Add(MailboxAddress.Parse(user.UserEmail));
-                email.Subject = "FAA Account Activation";
+                //var email = new MimeMessage();
+                //email.From.Add(MailboxAddress.Parse("ccchinmaysinnn@gmail.com"));
+                //email.To.Add(MailboxAddress.Parse(user.UserEmail));
+                //email.Subject = "FAA Account Activation";
 
-                var bodyBuilder = new BodyBuilder
-                {
-                    TextBody = $"Your activation token is: {user.ActivationToken}"
-                };
-                email.Body = bodyBuilder.ToMessageBody();
+                //var bodyBuilder = new BodyBuilder
+                //{
+                //    TextBody = $"Your activation token is: {user.ActivationToken}"
+                //};
+                //email.Body = bodyBuilder.ToMessageBody();
 
-                using var smtp = new SmtpClient();
-                smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-                smtp.Authenticate("ccchinmaysinnn@gmail.com", "vcxe hoqo qlvp hekw");
-                smtp.Send(email);
-                smtp.Disconnect(true);
+                //using var smtp = new SmtpClient();
+                //smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                //smtp.Authenticate("ccchinmaysinnn@gmail.com", "vcxe hoqo qlvp hekw");
+                //smtp.Send(email);
+                //smtp.Disconnect(true);
 
                 string messege = "Tour Operator added successfully.";
                 

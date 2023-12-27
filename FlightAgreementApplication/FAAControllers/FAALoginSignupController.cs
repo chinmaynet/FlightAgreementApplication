@@ -374,12 +374,19 @@ namespace FlightAgreementApplication.Controllers
 
 
         [HttpPost("Login")]
-        public AuthResponse LoginAction([FromBody] LoginRequestDto request)
+        public IActionResult LoginAction([FromBody] LoginRequestDto request)
         {
 
             AuthResponse loginResponse= _wrapper.Login(request);
+            if (loginResponse.Messege == "Invalid email or password.") {
+                return Unauthorized(new { Message = "Invalid email or password." });
+            }
+            else if (loginResponse.Messege == "Account is not activated.") {
+                return Unauthorized(new { Message = "Account is not activated." });
 
-            return loginResponse;
+            }                            
+
+            return Ok(loginResponse);
 
         }
 

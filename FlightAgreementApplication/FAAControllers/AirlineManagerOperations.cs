@@ -15,10 +15,11 @@ using MimeKit;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using static FlightAgreementApplication.DTO.Response.AirlineManagerOperationsResponse;
 
 namespace FlightAgreementApplication.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
 
@@ -34,19 +35,145 @@ namespace FlightAgreementApplication.Controllers
             _wrapper = wrapper;
         }
 
+        //[HttpGet("GetTourOperators")]
+        //public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators()
+        //{
+        //    try
+        //    {
+        //        var tourOperators = _wrapper.GetAllTourOperators();
+        //        return Ok(tourOperators.Value);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = "An error occurred while processing your request.", Error = ex.Message });
+        //    }
+        //}
+
+
         [HttpGet("GetTourOperators")]
-        public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators()
+        public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators(
+            string sortColumn = "tourOperatorName",
+            string sortOrder = "asc",
+            string searchTerm = "",
+            int page = 1,
+            int pageSize = 5)
         {
             try
             {
-                var tourOperators = _wrapper.GetAllTourOperators();
-                return Ok(tourOperators.Value);
+
+                var tourOperators = _context.TourOperators.ToList();
+
+
+                tourOperators = SearchTourOperators(tourOperators, searchTerm);
+
+
+                tourOperators = SortTourOperators(tourOperators, sortColumn, sortOrder);
+
+
+                var totalRowCount = tourOperators.Count;
+
+
+                var startIndex = (page - 1) * pageSize;
+                tourOperators = tourOperators.Skip(startIndex).Take(pageSize).ToList();
+
+
+                var response = new
+                {
+                    TotalRows = totalRowCount,
+                    TourOperators = tourOperators
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "An error occurred while processing your request.", Error = ex.Message });
             }
         }
+
+        private List<TourOperator> SearchTourOperators(List<TourOperator> tourOperators, string searchTerm)
+        {
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                tourOperators = tourOperators.Where(o =>
+            o.TourOperatorName.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorEmail.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorAddress.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorPhone.ToLower().Contains(searchTerm) ||
+                    o.TourOperatorLandLine.ToLower().Contains(searchTerm) ||
+                      o.TourOperatorContactPreferences.ToString().ToLower().Contains(searchTerm)
+
+                ).ToList();
+            }
+
+            return tourOperators;
+        }
+
+        private List<TourOperator> SortTourOperators(List<TourOperator> tourOperators, string sortColumn, string sortOrder)
+        {
+
+            switch (sortColumn)
+            {
+                case "tourOperatorName":
+                    tourOperators = sortOrder == "asc"
+                        ? tourOperators.OrderBy(o => o.TourOperatorName).ToList()
+                        : tourOperators.OrderByDescending(o => o.TourOperatorName).ToList();
+                    break;
+                case "tourOperatorEmail":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorEmail).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorEmail).ToList();
+                    break;
+                case "tourOperatorAddress":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorAddress).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorAddress).ToList();
+                    break;
+                case "tourOperatorPhone":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorPhone).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorPhone).ToList();
+                    break;
+                case "tourOperatorLandLine":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorLandLine).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorLandLine).ToList();
+                    break;
+                case "tourOperatorContactPreferences":
+                    tourOperators = sortOrder == "asc"
+                         ? tourOperators.OrderBy(o => o.TourOperatorContactPreferences).ToList()
+                         : tourOperators.OrderByDescending(o => o.TourOperatorContactPreferences).ToList();
+                    break;
+
+            }
+
+            return tourOperators;
+        }
+
+        //public ActionResult<IEnumerable<GetAllTourOperatorsResponse>> GetAllTourOperators(
+        //    string sortColumn = "tourOperatorName",
+        //    string sortOrder = "asc",
+        //    string searchTerm = "",
+        //    int page = 1,
+        //    int pageSize = 5)
+        //{
+        //    try
+        //    {
+        //        var tourOperators = _wrapper.GetAllTourOperators();
+        //        var response = new GetAllTourOperatorsResponse
+        //        {
+        //            TotalRows = tourOperators.Value.TotalRows,
+        //            TourOperators = tourOperators.Value.TourOperators,
+        //        };
+        //        return Ok(response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = "An error occurred while processing your request.", Error = ex.Message });
+        //    }
+        //}
+
         //public ActionResult<IEnumerable<TourOperator>> GetAllTourOperators()
         //{
         //    try
@@ -292,12 +419,12 @@ namespace FlightAgreementApplication.Controllers
         [HttpDelete("DeleteTourOperator/{tourOperatorId}")]
         public String DeleteTourOperator(Guid tourOperatorId)
         {
-            var msg=_wrapper.DeleteTourOperator(tourOperatorId);
+            var msg = _wrapper.DeleteTourOperator(tourOperatorId);
             return msg;
         }
 
 
-            private string GenerateToken()
+        private string GenerateToken()
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new byte[32];

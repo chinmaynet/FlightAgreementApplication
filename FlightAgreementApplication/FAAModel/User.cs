@@ -16,8 +16,8 @@ namespace FlightAgreementApplication.Model
         public IsActive ActivityStatus { get; set; }
 
         // Activation token properties
-        public string ActivationToken { get; set; } //
-        public DateTime ActivationTokenExpiry { get; set; } //
+        public string? ActivationToken { get; set; } //
+        public DateTime? ActivationTokenExpiry { get; set; } //
 
         // Password reset token properties
         public string? ResetToken { get; set; }  //
